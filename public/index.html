@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visor WebAR - Experiencia Personalizada</title>
+  
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    /* 1. Pop-Up Emergente Sticky AR */
+    #modal-sticky {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 16px;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+    }
+
+    .modal-card h3 { margin-top: 0; color: #111; font-size: 20px; }
+    .modal-card p { color: #555; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+
+    .modal-btn-group { display: flex; gap: 10px; }
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-si { background: #007bff; color: white; }
+    .btn-no { background: #e0e0e0; color: #333; }
+
+    /* 2. Capa de la Silueta Guía */
+    #guia-encuadre {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 999;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.25);
+      transition: opacity 0.5s ease;
+    }
+    
+    #imagen-silueta-png {
+      width: 65vw;
+      max-width: 300px;
+      height: auto;
+      opacity: 0.8;
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9));
+      display: block;
+    }
+
+    #texto-instruccion {
+      color: #ffffff;
+      font-family: sans-serif;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 15px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      text-align: center;
+    }
+
+    .oculto {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* 3. Banner Sticky AR en Pantalla 2D */
+    #mensaje-pantalla-sticky {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffcc00;
+      color: #000000;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-family: sans-serif;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body style="margin: 0; overflow: hidden;">
+
+  <!-- Modal Inicial -->
+  <div id="modal-sticky">
+    <div class="modal-card">
+      <h3>Modo Sticky AR 📱</h3>
+      <p>¿Deseas mantener los mensajes e información fijos en la pantalla aunque muevas la cámara y pierdas el objetivo?</p>
+      <div class="modal-btn-group">
+        <button class="modal-btn btn-no" onclick="responderSticky(false)">No, solo en AR</button>
+        <button class="modal-btn btn-si" onclick="responderSticky(true)">Sí, mantener activo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capa con Silueta apuntando directamente a 2.png -->
+  <div id="guia-encuadre">
+    <img id="imagen-silueta-png" src="./2.png" alt="Silueta de alineación">
+    <div id="texto-instruccion">Alinea la cámara con el objetivo</div>
+  </div>
+
+  <!-- Banner Persistente -->
+  <div id="mensaje-pantalla-sticky">¡Atrópalos a todos!</div>
+
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity id="target-objetivo" mindar-image-target="targetIndex: 0">
+      <a-plane position="0 0 0" width="1.2" height="0.4" color="#ffcc00" material="transparent: true; opacity: 0.95;"></a-plane>
+      <a-text 
+        id="texto-3d-ar"
+        value="¡Atropalos a todos!" 
+        color="#000000" 
+        align="center" 
+        position="0 0 0.05" 
+        width="3"
+        font="https://cdn.aframe.io/fonts/Roboto-msdf.json">
+      </a-text>
+    </a-entity>
+
+  </a-scene>
+
+  <script>
+    const targetObjetivo = document.querySelector('#target-objetivo');
+    const guiaEncuadre = document.querySelector('#guia-encuadre');
+    const mensajeSticky = document.querySelector('#mensaje-pantalla-sticky');
+    const imgSilueta = document.querySelector('#imagen-silueta-png');
+    const modal = document.querySelector('#modal-sticky');
+
+    let stickyModoActivado = false;
+
+    // Lee la silueta de admin.html si existe localmente; si no, carga 2.png desde GitHub
+    const siluetaGuardada = localStorage.getItem('silueta_custom_png');
+    const textoGuardado = localStorage.getItem('texto_mensaje_custom') || "¡Atrópalos a todos!";
+
+    if (siluetaGuardada && siluetaGuardada.trim() !== "") {
+      imgSilueta.src = siluetaGuardada;
+    } else {
+      imgSilueta.src = "./2.png";
+    }
+
+    mensajeSticky.innerText = textoGuardado;
+    document.querySelector('#texto-3d-ar').setAttribute('value', textoGuardado);
+
+    function responderSticky(activado) {
+      stickyModoActivado = activado;
+      modal.style.display = 'none';
+    }
+
+    targetObjetivo.addEventListener("targetFound", () => {
+      guiaEncuadre.classList.add("oculto");
+      if (stickyModoActivado) {
+        mensajeSticky.style.display = "block";
+      }
+    });
+
+    targetObjetivo.addEventListener("targetLost", () => {
+      guiaEncuadre.classList.remove("oculto");
+      if (!stickyModoActivado) {
+        mensajeSticky.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
