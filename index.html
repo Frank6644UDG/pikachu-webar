@@ -1,3 +1,4 @@
+HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,7 +9,46 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* Capa para la Silueta PNG real */
+    /* 1. Modal / Pop-up de Pregunta Inicial */
+    #modal-sticky {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 16px;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+    }
+
+    .modal-card h3 { margin-top: 0; color: #111; font-size: 20px; }
+    .modal-card p { color: #555; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+
+    .modal-btn-group { display: flex; gap: 10px; }
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-si { background: #007bff; color: white; }
+    .btn-no { background: #e0e0e0; color: #333; }
+
+    /* 2. Capa de la Silueta Guía */
     #guia-encuadre {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -45,7 +85,8 @@
       pointer-events: none !important;
     }
 
-    #mensaje-pantalla {
+    /* 3. Banner Fijo en Pantalla 2D (Sticky AR) */
+    #mensaje-pantalla-sticky {
       position: fixed;
       bottom: 40px;
       left: 50%;
@@ -55,9 +96,9 @@
       padding: 14px 28px;
       border-radius: 30px;
       font-family: sans-serif;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
       display: none;
       z-index: 1000;
     }
@@ -65,13 +106,26 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
 
+  <!-- Pop-Up Emergente al Entrar -->
+  <div id="modal-sticky">
+    <div class="modal-card">
+      <h3>Modo Sticky AR 📱</h3>
+      <p>¿Deseas mantener los mensajes e información fijos en la pantalla aunque muevas la cámara y pierdas el objetivo?</p>
+      <div class="modal-btn-group">
+        <button class="modal-btn btn-no" onclick="responderSticky(false)">No, solo en AR</button>
+        <button class="modal-btn btn-si" onclick="responderSticky(true)">Sí, mantener activo</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Silueta dinámica cargada desde admin.html -->
   <div id="guia-encuadre">
     <img id="imagen-silueta-png" src="" alt="Silueta de alineación">
     <div id="texto-instruccion">Alinea la cámara con el objetivo</div>
   </div>
 
-  <div id="mensaje-pantalla">¡Atrópalos a todos!</div>
+  <!-- Banner Persistente para Sticky AR -->
+  <div id="mensaje-pantalla-sticky">¡Atrópalos a todos!</div>
 
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
@@ -85,6 +139,7 @@
     <a-entity id="target-objetivo" mindar-image-target="targetIndex: 0">
       <a-plane position="0 0 0" width="1.2" height="0.4" color="#ffcc00" material="transparent: true; opacity: 0.95;"></a-plane>
       <a-text 
+        id="texto-3d-ar"
         value="¡Atropalos a todos!" 
         color="#000000" 
         align="center" 
@@ -99,22 +154,48 @@
   <script>
     const targetObjetivo = document.querySelector('#target-objetivo');
     const guiaEncuadre = document.querySelector('#guia-encuadre');
-    const mensajePantalla = document.querySelector('#mensaje-pantalla');
+    const mensajeSticky = document.querySelector('#mensaje-pantalla-sticky');
     const imgSilueta = document.querySelector('#imagen-silueta-png');
+    const modal = document.querySelector('#modal-sticky');
 
-    // Cargar la silueta guardada desde el panel Admin
+    let stickyModoActivado = false;
+
+    // Cargar la silueta y texto guardados desde admin.html
     const siluetaGuardada = localStorage.getItem('silueta_custom_png');
-    if (siluetaGuardada) {
-      imgSilueta.src = siluetaGuardada;
+    const textoGuardado = localStorage.getItem('texto_mensaje_custom') || "¡Atrópalos a todos!";
+
+    if (siluetaGuardada) imgSilueta.src = siluetaGuardada;
+    
+    // Actualizar textos en AR y en pantalla 2D
+    mensajeSticky.innerText = textoGuardado;
+    document.querySelector('#texto-3d-ar').setAttribute('value', textoGuardado);
+
+    // Selección del usuario en el Modal
+    function responderSticky(activado) {
+      stickyModoActivado = activado;
+      modal.style.display = 'none'; // Ocultar el Pop-Up
     }
 
+    // Evento A: Se detecta la foto de Pikachu
     targetObjetivo.addEventListener("targetFound", () => {
       guiaEncuadre.classList.add("oculto");
-      mensajePantalla.style.display = "block";
+      
+      // Si el usuario eligió Sticky AR, el banner 2D aparece en pantalla
+      if (stickyModoActivado) {
+        mensajeSticky.style.display = "block";
+      }
     });
 
+    // Evento B: Se pierde la foto al mover la cámara
     targetObjetivo.addEventListener("targetLost", () => {
+      // Vuelve a mostrar la guía de encuadre si el usuario lo desea
       guiaEncuadre.classList.remove("oculto");
+
+      // Si Sticky AR está DESACTIVADO, ocultamos el banner al mover la cámara
+      if (!stickyModoActivado) {
+        mensajeSticky.style.display = "none";
+      }
+      // Si Sticky AR está ACTIVADO, mensajeSticky.style.display se queda en "block" y NO se borra
     });
   </script>
 </body>
