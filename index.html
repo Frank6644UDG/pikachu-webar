@@ -1,3 +1,4 @@
+HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* 1. Pop-up inicial de Sticky AR */
+    /* 1. Pop-Up Emergente Sticky AR */
     #modal-sticky {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -65,8 +66,9 @@
       width: 65vw;
       max-width: 300px;
       height: auto;
-      opacity: 0.75;
+      opacity: 0.8;
       filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9));
+      display: block;
     }
 
     #texto-instruccion {
@@ -84,7 +86,7 @@
       pointer-events: none !important;
     }
 
-    /* 3. Banner para Sticky AR en pantalla 2D */
+    /* 3. Banner Sticky AR en Pantalla 2D */
     #mensaje-pantalla-sticky {
       position: fixed;
       bottom: 40px;
@@ -105,7 +107,7 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
 
-  <!-- Pop-Up Emergente al Entrar -->
+  <!-- Modal Inicial -->
   <div id="modal-sticky">
     <div class="modal-card">
       <h3>Modo Sticky AR 📱</h3>
@@ -117,13 +119,13 @@
     </div>
   </div>
 
-  <!-- Silueta dinámica cargada desde admin.html -->
+  <!-- Capa con Silueta -->
   <div id="guia-encuadre">
-    <img id="imagen-silueta-png" src="" alt="Silueta de alineación">
+    <img id="imagen-silueta-png" src="./silueta.png" alt="Silueta de alineación">
     <div id="texto-instruccion">Alinea la cámara con el objetivo</div>
   </div>
 
-  <!-- Banner Persistente para Sticky AR -->
+  <!-- Banner Persistente -->
   <div id="mensaje-pantalla-sticky">¡Atrópalos a todos!</div>
 
   <a-scene 
@@ -159,42 +161,33 @@
 
     let stickyModoActivado = false;
 
-    // --- CORRECCIÓN ANTI-ERROR PARA LA SILUETA ---
+    // Lógica inteligente de silueta: usa la subida por Admin si existe, o el archivo local 'silueta.png' por defecto
     const siluetaGuardada = localStorage.getItem('silueta_custom_png');
     const textoGuardado = localStorage.getItem('texto_mensaje_custom') || "¡Atrópalos a todos!";
 
     if (siluetaGuardada && siluetaGuardada.trim() !== "") {
-      // Si hay una silueta PNG en el almacenamiento de este navegador
       imgSilueta.src = siluetaGuardada;
-      imgSilueta.style.display = 'block';
     } else {
-      // Si no hay imagen guardada, oculta el tag <img> para evitar el ícono de imagen rota
-      imgSilueta.style.display = 'none';
+      imgSilueta.src = "./silueta.png"; // Archivo por defecto en GitHub
     }
-    
-    // Actualizar textos
+
     mensajeSticky.innerText = textoGuardado;
     document.querySelector('#texto-3d-ar').setAttribute('value', textoGuardado);
 
-    // Selección del usuario en el Modal
     function responderSticky(activado) {
       stickyModoActivado = activado;
       modal.style.display = 'none';
     }
 
-    // Evento A: Se detecta la foto objetivo
     targetObjetivo.addEventListener("targetFound", () => {
       guiaEncuadre.classList.add("oculto");
-      
       if (stickyModoActivado) {
         mensajeSticky.style.display = "block";
       }
     });
 
-    // Evento B: Se pierde la foto al mover la cámara
     targetObjetivo.addEventListener("targetLost", () => {
       guiaEncuadre.classList.remove("oculto");
-
       if (!stickyModoActivado) {
         mensajeSticky.style.display = "none";
       }
