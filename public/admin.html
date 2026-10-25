@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Creador WebAR - Panel de Administración</title>
   
+  <!-- Carga del compilador como módulo ES6 de JS -->
+  <script type="module">
+    import { Compiler } = "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js";
+    window.MINDAR_Compiler = Compiler;
+  </script>
+
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -52,7 +58,6 @@
       line-height: 1.4;
     }
 
-    /* Contenedor Exterior para Centrar el Teléfono */
     .simulador-wrapper {
       display: flex;
       justify-content: center;
@@ -60,7 +65,6 @@
       margin-bottom: 15px;
     }
 
-    /* Marco Realista de Teléfono Smartphone Vertical */
     .marco-telefono {
       position: relative;
       width: 220px;
@@ -76,7 +80,6 @@
       justify-content: center;
     }
 
-    /* Muesca / Notch de la cámara del smartphone */
     .notch-telefono {
       position: absolute;
       top: 10px;
@@ -148,14 +151,13 @@
 
   <div class="card">
     
-    <!-- Indicador de Progreso -->
     <div class="indicador-pasos">
       <span class="paso-dot activo" id="dot-1">1. Imágenes</span>
       <span class="paso-dot" id="dot-2">2. Texto y Posición</span>
       <span class="paso-dot" id="dot-3">3. Audio y Publicar</span>
     </div>
 
-    <!-- PASO 1: Carga de Fotos -->
+    <!-- PASO 1 -->
     <div class="paso activo" id="paso-1">
       <h2>Paso 1: Configurar Objetivos</h2>
       <p class="subtitulo">Sube la imagen de escaneo y su silueta correspondiente.</p>
@@ -179,7 +181,7 @@
       </div>
     </div>
 
-    <!-- PASO 2: Configuración de Texto y Simulador de Teléfono Vertical -->
+    <!-- PASO 2 -->
     <div class="paso" id="paso-2">
       <h2>Paso 2: Mensaje e Interfaz</h2>
       <p class="subtitulo">Personaliza el mensaje flotante y revisa la vista previa en el smartphone.</p>
@@ -204,7 +206,7 @@
       </div>
     </div>
 
-    <!-- PASO 3: Audio y Finalización -->
+    <!-- PASO 3 -->
     <div class="paso" id="paso-3">
       <h2>Paso 3: Contenido Multimedia</h2>
       <p class="subtitulo">Añade música o audio a la experiencia.</p>
@@ -258,24 +260,19 @@
       document.getElementById('preview-texto-box').innerText = valor || "Tu texto aquí";
     }
 
-    function cargarScriptMindAR() {
+    function prepararCanvasImagen(file) {
       return new Promise((resolve, reject) => {
-        if (window.MINDAR) return resolve();
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-    }
-
-    function cargarImagenParaCompilar(file) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
         const reader = new FileReader();
         reader.onload = (e) => {
-          img.onload = () => resolve(img);
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas);
+          };
           img.onerror = reject;
           img.src = e.target.result;
         };
@@ -294,16 +291,17 @@
 
       if (inputObjetivo.files[0]) {
         btn.disabled = true;
-        btn.innerText = "Compilando...";
+        btn.innerText = "Compilando en el navegador...";
 
         try {
-          await cargarScriptMindAR();
+          if (!window.MINDAR_Compiler) {
+            throw new Error("El compilador de MindAR aún se está descargando. Reintenta en 2 segundos.");
+          }
 
-          // Cargar imagen objetivo usando FileReader de forma segura
-          const imgElement = await cargarImagenParaCompilar(inputObjetivo.files[0]);
+          const canvasElement = await prepararCanvasImagen(inputObjetivo.files[0]);
 
-          const compiler = new MINDAR.IMAGE.Compiler();
-          await compiler.compileImageTargets([imgElement]);
+          const compiler = new window.MINDAR_Compiler();
+          await compiler.compileImageTargets([canvasElement]);
           const exportedBuffer = await compiler.exportData();
 
           const formData = new FormData();
@@ -330,16 +328,7 @@
           }
 
         } catch (error) {
-          console.error(error);
-          alert("Ocurrió un error durante la compilación.");
+          console.error("Detalle:", error);
+          alert("Error de compilación: " + (error.message || error));
           btn.disabled = false;
-          btn.innerText = "Terminar Configuración ✔";
-        }
-      } else {
-        alert("Configuración guardada. Redirigiendo...");
-        window.location.href = 'index.html';
-      }
-    }
-  </script>
-</body>
-</html>
+          btn.
