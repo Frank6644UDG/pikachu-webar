@@ -3,106 +3,238 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Administración - Creador WebAR</title>
+  <title>Creador WebAR - Panel de Administración</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f6f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
       margin: 0;
       padding: 20px;
       display: flex;
       justify-content: center;
+      align-items: center;
+      min-height: 90vh;
     }
     .card {
       background: #ffffff;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      max-width: 480px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-width: 500px;
       width: 100%;
     }
-    h2 { color: #333; margin-top: 0; }
-    .form-group { margin-bottom: 20px; }
-    label { font-weight: bold; display: block; margin-bottom: 8px; color: #555; }
-    input[type="file"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    .paso { display: none; }
+    .paso.activo { display: block; }
     
-    /* Leyenda de advertencia para el PNG */
+    h2 { color: #1a1a1a; margin-top: 0; font-size: 22px; }
+    .subtitulo { color: #666; font-size: 14px; margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 20px; }
+    label { font-weight: bold; display: block; margin-bottom: 8px; color: #333; }
+    input[type="file"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
     .leyenda-advertencia {
-      background-color: #fff3cd;
+      background-color: #fff8e6;
       border-left: 4px solid #ffc107;
       color: #856404;
       padding: 12px;
       font-size: 13px;
       margin-top: 8px;
-      border-radius: 4px;
+      border-radius: 6px;
       line-height: 1.4;
     }
 
+    /* Simulador / Silueta de Pantalla Manual */
+    .contenedor-simulador {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      background-color: #111;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 15px;
+      border: 2px solid #ddd;
+    }
+    .preview-silueta-bg {
+      max-height: 80%;
+      max-width: 80%;
+      opacity: 0.5;
+      object-fit: contain;
+    }
+    .preview-texto-overlay {
+      position: absolute;
+      background: rgba(255, 204, 0, 0.95);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .btn-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
     button {
+      flex: 1;
       background-color: #007bff;
       color: white;
       border: none;
-      padding: 12px 20px;
-      font-size: 16px;
+      padding: 12px 18px;
+      font-size: 15px;
       font-weight: bold;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      width: 100%;
-      margin-top: 10px;
+      transition: background 0.2s;
     }
     button:hover { background-color: #0056b3; }
-    .status { margin-top: 15px; font-weight: bold; color: #28a745; text-align: center; }
+    button.secundario { background-color: #6c757d; }
+    button.secundario:hover { background-color: #5a6268; }
+    button.exito { background-color: #28a745; }
+    button.exito:hover { background-color: #218838; }
+
+    .indicador-pasos {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .paso-dot { font-size: 12px; font-weight: bold; color: #aaa; }
+    .paso-dot.activo { color: #007bff; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>Configurador de Experiencia AR</h2>
     
-    <!-- Campo 1: Imagen Objetivo -->
-    <div class="form-group">
-      <label for="foto-objetivo">1. Foto Objetivo (JPG / PNG):</label>
-      <input type="file" id="foto-objetivo" accept="image/*">
+    <!-- Indicador de Progreso -->
+    <div class="indicador-pasos">
+      <span class="paso-dot activo" id="dot-1">1. Imágenes</span>
+      <span class="paso-dot" id="dot-2">2. Texto y Posición</span>
+      <span class="paso-dot" id="dot-3">3. Audio y Publicar</span>
     </div>
 
-    <!-- Campo 2: Silueta PNG -->
-    <div class="form-group">
-      <label for="foto-silueta">2. Silueta Guía de Encuadre (PNG Transparente):</label>
-      <input type="file" id="foto-silueta" accept="image/png">
+    <!-- PASO 1: Carga de Fotos -->
+    <div class="paso activo" id="paso-1">
+      <h2>Paso 1: Configurar Objetivos</h2>
+      <p class="subtitulo">Sube la imagen de escaneo y su silueta correspondiente.</p>
       
-      <!-- Leyenda solicitada -->
-      <div class="leyenda-advertencia">
-        ⚠️ <strong>Importante:</strong> La silueta debe ser el contorno recortado (con fondo transparente PNG) basado exactamente en la misma foto objetivo cargada en el paso 1.
+      <div class="form-group">
+        <label for="foto-objetivo">Foto Objetivo (JPG / PNG):</label>
+        <input type="file" id="foto-objetivo" accept="image/*">
+      </div>
+
+      <div class="form-group">
+        <label for="foto-silueta">Silueta Guía de Encuadre (PNG Transparente):</label>
+        <input type="file" id="foto-silueta" accept="image/png" onchange="cargarVistaPreviaSilueta(this)">
+        
+        <div class="leyenda-advertencia">
+          ⚠️ <strong>Importante:</strong> La silueta debe ser el contorno recortado (con fondo transparente PNG) basado exactamente en la misma foto objetivo cargada arriba.
+        </div>
+      </div>
+
+      <div class="btn-container">
+        <button onclick="irAPaso(2)">Siguiente ➔</button>
       </div>
     </div>
 
-    <button onclick="guardarConfiguracion()">Guardar y Probar Experiencia</button>
-    <div id="mensaje-estado" class="status"></div>
+    <!-- PASO 2: Configuración de Texto y Silueta de Pantalla Manual -->
+    <div class="paso" id="paso-2">
+      <h2>Paso 2: Mensaje e Interfaz</h2>
+      <p class="subtitulo">Personaliza el mensaje flotante y revisa la vista previa.</p>
+
+      <div class="form-group">
+        <label for="input-texto-mensaje">Texto del Banner Flotante:</label>
+        <input type="text" id="input-texto-mensaje" value="¡Atrópalos a todos!" oninput="actualizarTextoPreview(this.value)">
+      </div>
+
+      <label>Vista Previa Manual sobre Pantalla:</label>
+      <div class="contenedor-simulador">
+        <img id="preview-silueta-img" class="preview-silueta-bg" src="" alt="Vista previa silueta">
+        <div id="preview-texto-box" class="preview-texto-overlay">¡Atrópalos a todos!</div>
+      </div>
+
+      <div class="btn-container">
+        <button class="secundario" onclick="irAPaso(1)">⬅ Atrás</button>
+        <button onclick="irAPaso(3)">Confirmar ➔</button>
+      </div>
+    </div>
+
+    <!-- PASO 3: Audio y Finalización -->
+    <div class="paso" id="paso-3">
+      <h2>Paso 3: Contenido Multimedia</h2>
+      <p class="subtitulo">Añade música o audio a la experiencia.</p>
+
+      <div class="form-group">
+        <label for="audio-archivo">Canción o Audio de Fondo (MP3):</label>
+        <input type="file" id="audio-archivo" accept="audio/mp3,audio/wav">
+      </div>
+
+      <div class="btn-container">
+        <button class="secundario" onclick="irAPaso(2)">⬅ Atrás</button>
+        <button class="exito" onclick="finalizarConfiguracion()">Terminar Configuración ✔</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    function guardarConfiguracion() {
-      const inputObjetivo = document.getElementById('foto-objetivo');
-      const inputSilueta = document.getElementById('foto-silueta');
-      const mensaje = document.getElementById('mensaje-estado');
+    let siluetaBase64 = "";
 
-      if (!inputSilueta.files[0]) {
-        alert("Por favor selecciona al menos el archivo PNG de la silueta.");
-        return;
+    function irAPaso(numeroPaso) {
+      if (numeroPaso === 2) {
+        const inputSilueta = document.getElementById('foto-silueta');
+        if (!inputSilueta.files[0] && !siluetaBase64) {
+          alert("Por favor sube la foto de la silueta PNG antes de continuar.");
+          return;
+        }
       }
 
-      // Convertir la imagen PNG a formato Base64 para almacenarla localmente
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        localStorage.setItem('silueta_custom_png', e.target.result);
-        mensaje.innerText = "¡Configuración guardada! Redirigiendo al visor...";
-        
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 1200);
-      };
+      document.querySelectorAll('.paso').forEach(p => p.classList.remove('activo'));
+      document.querySelectorAll('.paso-dot').forEach(d => d.classList.remove('activo'));
+
+      document.getElementById(`paso-${numeroPaso}`).classList.add('activo');
+      document.getElementById(`dot-${numeroPaso}`).classList.add('activo');
+    }
+
+    function cargarVistaPreviaSilueta(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          siluetaBase64 = e.target.result;
+          document.getElementById('preview-silueta-img').src = siluetaBase64;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function actualizarTextoPreview(valor) {
+      document.getElementById('preview-texto-box').innerText = valor || "Tu texto aquí";
+    }
+
+    function finalizarConfiguracion() {
+      const textoMensaje = document.getElementById('input-texto-mensaje').value;
       
-      reader.readAsDataURL(inputSilueta.files[0]);
+      // Guardar configuraciones en el almacenamiento local
+      localStorage.setItem('silueta_custom_png', siluetaBase64);
+      localStorage.setItem('texto_mensaje_custom', textoMensaje);
+
+      alert("¡Configuración completada con éxito! Redirigiendo a la experiencia AR...");
+      window.location.href = 'index.html';
     }
   </script>
 </body>
