@@ -10,13 +10,13 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; }
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background-color: #000; }
 
     /* 1. Modal / Pop-up de Pregunta Inicial (Sticky AR) */
     #modal-sticky {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.88);
       z-index: 9999;
       display: flex;
       justify-content: center;
@@ -31,7 +31,7 @@
       border-radius: 16px;
       max-width: 360px;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     }
 
     .modal-card h3 { margin-top: 0; color: #111; font-size: 20px; }
@@ -95,7 +95,7 @@
       padding: 18px 20px;
       border-radius: 20px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-      display: none; /* Se activa cuando termina el video */
+      display: none;
       z-index: 1000;
       box-sizing: border-box;
       animation: fadeInUp 0.4s ease-out;
@@ -118,4 +118,238 @@
       color: white;
       font-size: 11px;
       font-weight: bold;
-      padding: 3
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    .card-titulo {
+      margin: 0;
+      font-size: 16px;
+      font-weight: bold;
+      color: #111;
+    }
+
+    .card-texto {
+      font-size: 14px;
+      line-height: 1.45;
+      color: #333;
+      margin: 8px 0 16px 0;
+      min-height: 50px;
+    }
+
+    .btn-cat {
+      width: 100%;
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-cat:hover { background: #218838; }
+
+    .oculto { opacity: 0 !important; pointer-events: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Modal Pregunta Inicial Sticky AR -->
+  <div id="modal-sticky">
+    <div class="modal-card">
+      <h3 id="modal-titulo">Modo Sticky AR 📱</h3>
+      <p id="modal-desc">¿Deseas mantener los mensajes e información fijos en la pantalla aunque muevas la cámara y pierdas el objetivo?</p>
+      <div class="modal-btn-group">
+        <button class="modal-btn btn-no" onclick="responderSticky(false)" id="btn-modal-no">No, solo en AR</button>
+        <button class="modal-btn btn-si" onclick="responderSticky(true)" id="btn-modal-si">Sí, mantener activo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capa con Silueta Guía -->
+  <div id="guia-encuadre">
+    <img id="imagen-silueta-png" src="./2.png" alt="Silueta de alineación">
+    <div id="texto-instruccion">Alinea la cámara con el objetivo</div>
+  </div>
+
+  <!-- Tarjeta Paginada 2D (Sticky AR) -->
+  <div id="card-info-paginada">
+    <div class="card-header">
+      <h3 class="card-titulo" id="info-titulo">Hachiko (Estatua de Ueno)</h3>
+      <span class="badge-pagina" id="badge-paso">Página 1/2</span>
+    </div>
+    <p class="card-texto" id="info-contenido">Cargando información...</p>
+    <button class="btn-cat" id="btn-siguiente" onclick="avanzarPagina()">
+      Siguiente <span id="flecha-cat">➔</span>
+    </button>
+  </div>
+
+  <!-- Escena A-Frame / MindAR -->
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: no; uiError: no;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
+
+    <a-assets timeout="3000">
+      <video id="video-intro" src="./intro.mp4" preload="auto" crossorigin="anonymous" playsinline webkit-playsinline></video>
+      <audio id="audio-fondo" src="./audio.mp3" preload="auto" crossorigin="anonymous"></audio>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Objetivo WebAR -->
+    <a-entity id="target-objetivo" mindar-image-target="targetIndex: 0">
+      <a-video 
+        src="#video-intro" 
+        width="1.2" 
+        height="0.8" 
+        position="0 0 0" 
+        rotation="0 0 0">
+      </a-video>
+    </a-entity>
+
+  </a-scene>
+
+  <script>
+    // DICCIONARIOS MULTILENGUAJE
+    const diccionarios = {
+      es: {
+        modalTitulo: "Modo Sticky AR 📱",
+        modalDesc: "¿Deseas mantener los mensajes e información fijos en la pantalla aunque muevas la cámara?",
+        btnSi: "Sí, mantener activo",
+        btnNo: "No, solo en AR",
+        instruccion: "Alinea la cámara con la placa de la estatua",
+        titulo: "Estatua de Hachiko (Ueno)",
+        paginas: [
+          "Hachiko fue un perro japonés recordado por su asombrosa lealtad a su dueño, el profesor Hidesaburo Ueno, a quien esperó diariamente durante años.",
+          "Esta estatua rinde homenaje a su conmovedor reencuentro en el campus de la Universidad de Tokio, celebrando la fidelidad eterna."
+        ],
+        btnPaso1: "Ver más historia ➔",
+        btnPaso2: "Entendido ✔"
+      },
+      en: {
+        modalTitulo: "Sticky AR Mode 📱",
+        modalDesc: "Do you want to keep the messages fixed on screen even if you move the camera away?",
+        btnSi: "Yes, keep active",
+        btnNo: "No, AR only",
+        instruccion: "Align camera with the statue plaque",
+        titulo: "Hachiko Statue (Ueno)",
+        paginas: [
+          "Hachiko was a Japanese dog remembered for his remarkable loyalty to his owner, Professor Hidesaburo Ueno, whom he waited for daily for years.",
+          "This statue commemorates their heartwarming reunion at the University of Tokyo campus, celebrating everlasting fidelity."
+        ],
+        btnPaso1: "Read more ➔",
+        btnPaso2: "Got it ✔"
+      }
+    };
+
+    const userLang = (navigator.language || navigator.userLanguage || 'es').substring(0, 2);
+    const textLang = diccionarios[userLang] ? diccionarios[userLang] : diccionarios['en'];
+
+    // Cargar personalización de páginas 1 y 2 desde admin.html si existen
+    const customPag1 = localStorage.getItem('texto_custom_pag1');
+    const customPag2 = localStorage.getItem('texto_custom_pag2');
+    if (customPag1 && customPag2) {
+      textLang.paginas = [customPag1, customPag2];
+    }
+
+    // Elementos DOM
+    const modalSticky = document.querySelector('#modal-sticky');
+    const targetObjetivo = document.querySelector('#target-objetivo');
+    const guiaEncuadre = document.querySelector('#guia-encuadre');
+    const imgSilueta = document.querySelector('#imagen-silueta-png');
+    
+    const cardInfo = document.querySelector('#card-info-paginada');
+    const infoTitulo = document.querySelector('#info-titulo');
+    const infoContenido = document.querySelector('#info-contenido');
+    const badgePaso = document.querySelector('#badge-paso');
+    const btnSiguiente = document.querySelector('#btn-siguiente');
+
+    const videoIntro = document.querySelector('#video-intro');
+    const audioFondo = document.querySelector('#audio-fondo');
+
+    let stickyModoActivado = false;
+    let paginaActual = 0;
+
+    // Configurar interfaz inicial
+    document.querySelector('#modal-titulo').innerText = textLang.modalTitulo;
+    document.querySelector('#modal-desc').innerText = textLang.modalDesc;
+    document.querySelector('#btn-modal-si').innerText = textLang.btnSi;
+    document.querySelector('#btn-modal-no').innerText = textLang.btnNo;
+    document.querySelector('#texto-instruccion').innerText = textLang.instruccion;
+    infoTitulo.innerText = textLang.titulo;
+
+    // Cargar silueta guardada
+    const siluetaGuardada = localStorage.getItem('silueta_custom_png');
+    if (siluetaGuardada && siluetaGuardada.trim() !== "") {
+      imgSilueta.src = siluetaGuardada;
+    }
+
+    function responderSticky(activado) {
+      stickyModoActivado = activado;
+      modalSticky.style.display = 'none';
+
+      // Habilitar audio/video en el navegador tras el toque del usuario
+      if (videoIntro) videoIntro.load();
+      if (audioFondo) audioFondo.load();
+    }
+
+    // EVENTO TARGET ENCONTRADO
+    targetObjetivo.addEventListener("targetFound", () => {
+      guiaEncuadre.classList.add("oculto");
+
+      // Intentar reproducir video/audio si están disponibles
+      if (videoIntro && videoIntro.readyState >= 2) {
+        videoIntro.currentTime = 0;
+        videoIntro.play().catch(e => console.log("Video no disponible o bloqueado"));
+      }
+      if (audioFondo && audioFondo.readyState >= 2) {
+        audioFondo.currentTime = 0;
+        audioFondo.play().catch(e => console.log("Audio no disponible"));
+      }
+
+      // Desplegar la tarjeta con la información
+      mostrarPagina(0);
+      cardInfo.style.display = "block";
+    });
+
+    // EVENTO TARGET PERDIDO
+    targetObjetivo.addEventListener("targetLost", () => {
+      guiaEncuadre.classList.remove("oculto");
+
+      if (!stickyModoActivado) {
+        cardInfo.style.display = "none";
+      }
+    });
+
+    // PAGINADOR
+    function mostrarPagina(index) {
+      paginaActual = index;
+      infoContenido.innerText = textLang.paginas[paginaActual];
+      badgePaso.innerText = `Página ${paginaActual + 1}/2`;
+
+      if (paginaActual === 0) {
+        btnSiguiente.innerText = textLang.btnPaso1;
+      } else {
+        btnSiguiente.innerText = textLang.btnPaso2;
+      }
+    }
+
+    function avanzarPagina() {
+      if (paginaActual === 0) {
+        mostrarPagina(1);
+      } else {
+        cardInfo.style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
