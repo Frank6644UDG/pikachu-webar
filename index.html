@@ -1,16 +1,14 @@
-HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prueba WebAR - ¡Atrópalos a todos!</title>
+  <title>Visor WebAR - Experiencia Personalizada</title>
   
-  <!-- Librerías de 3D (A-Frame) y WebAR (MindAR) -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* Capa de la silueta/guía sobre la cámara */
+    /* Capa para la Silueta PNG real */
     #guia-encuadre {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -20,26 +18,24 @@ HTML
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 0, 0, 0.15);
+      background: rgba(0, 0, 0, 0.25);
       transition: opacity 0.5s ease;
     }
     
-    #cuadro-silueta {
-      width: 70vw;
-      height: 70vw;
-      max-width: 320px;
-      max-height: 320px;
-      border: 3px dashed #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    #imagen-silueta-png {
+      width: 65vw;
+      max-width: 300px;
+      height: auto;
+      opacity: 0.75;
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9));
     }
 
     #texto-instruccion {
       color: #ffffff;
       font-family: sans-serif;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
-      margin-top: 20px;
+      margin-top: 15px;
       text-shadow: 0 2px 4px rgba(0,0,0,0.8);
       text-align: center;
     }
@@ -49,7 +45,6 @@ HTML
       pointer-events: none !important;
     }
 
-    /* Target-Lost / Sticky AR: Mensaje secundario en pantalla si se pierde el objetivo */
     #mensaje-pantalla {
       position: fixed;
       bottom: 40px;
@@ -70,16 +65,14 @@ HTML
 </head>
 <body style="margin: 0; overflow: hidden;">
 
-  <!-- 1. Guía de Encuadre (Silueta 2D) -->
+  <!-- Silueta dinámica cargada desde admin.html -->
   <div id="guia-encuadre">
-    <div id="cuadro-silueta"></div>
-    <div id="texto-instruccion">Apunta tu cámara hacia la foto</div>
+    <img id="imagen-silueta-png" src="" alt="Silueta de alineación">
+    <div id="texto-instruccion">Alinea la cámara con el objetivo</div>
   </div>
 
-  <!-- 2. Sticky AR / Banner en Pantalla (Fallback al desenfocar) -->
   <div id="mensaje-pantalla">¡Atrópalos a todos!</div>
 
-  <!-- 3. Escena AR en 3D -->
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
     color-space="sRGB" 
@@ -89,13 +82,8 @@ HTML
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Ancla asociada a tu foto procesada -->
     <a-entity id="target-objetivo" mindar-image-target="targetIndex: 0">
-      
-      <!-- Fondo/Plano 3D para darle estilo al texto -->
       <a-plane position="0 0 0" width="1.2" height="0.4" color="#ffcc00" material="transparent: true; opacity: 0.95;"></a-plane>
-
-      <!-- Texto flotante en 3D sobre el objetivo -->
       <a-text 
         value="¡Atropalos a todos!" 
         color="#000000" 
@@ -104,7 +92,6 @@ HTML
         width="3"
         font="https://cdn.aframe.io/fonts/Roboto-msdf.json">
       </a-text>
-
     </a-entity>
 
   </a-scene>
@@ -113,18 +100,20 @@ HTML
     const targetObjetivo = document.querySelector('#target-objetivo');
     const guiaEncuadre = document.querySelector('#guia-encuadre');
     const mensajePantalla = document.querySelector('#mensaje-pantalla');
+    const imgSilueta = document.querySelector('#imagen-silueta-png');
 
-    // Evento A: Se reconoce la foto objetivo
+    // Cargar la silueta guardada desde el panel Admin
+    const siluetaGuardada = localStorage.getItem('silueta_custom_png');
+    if (siluetaGuardada) {
+      imgSilueta.src = siluetaGuardada;
+    }
+
     targetObjetivo.addEventListener("targetFound", () => {
-      // Oculta la silueta de encuadre
       guiaEncuadre.classList.add("oculto");
-      // Muestra el banner fijo en pantalla (Sticky AR)
       mensajePantalla.style.display = "block";
     });
 
-    // Evento B: Se pierde de vista la foto
     targetObjetivo.addEventListener("targetLost", () => {
-      // Vuelve a mostrar la guía de encuadre si el usuario desenfoca
       guiaEncuadre.classList.remove("oculto");
     });
   </script>
