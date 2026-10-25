@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,7 +8,7 @@ HTML
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* 1. Modal / Pop-up de Pregunta Inicial */
+    /* 1. Pop-up inicial de Sticky AR */
     #modal-sticky {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -85,7 +84,7 @@ HTML
       pointer-events: none !important;
     }
 
-    /* 3. Banner Fijo en Pantalla 2D (Sticky AR) */
+    /* 3. Banner para Sticky AR en pantalla 2D */
     #mensaje-pantalla-sticky {
       position: fixed;
       bottom: 40px;
@@ -160,27 +159,33 @@ HTML
 
     let stickyModoActivado = false;
 
-    // Cargar la silueta y texto guardados desde admin.html
+    // --- CORRECCIÓN ANTI-ERROR PARA LA SILUETA ---
     const siluetaGuardada = localStorage.getItem('silueta_custom_png');
     const textoGuardado = localStorage.getItem('texto_mensaje_custom') || "¡Atrópalos a todos!";
 
-    if (siluetaGuardada) imgSilueta.src = siluetaGuardada;
+    if (siluetaGuardada && siluetaGuardada.trim() !== "") {
+      // Si hay una silueta PNG en el almacenamiento de este navegador
+      imgSilueta.src = siluetaGuardada;
+      imgSilueta.style.display = 'block';
+    } else {
+      // Si no hay imagen guardada, oculta el tag <img> para evitar el ícono de imagen rota
+      imgSilueta.style.display = 'none';
+    }
     
-    // Actualizar textos en AR y en pantalla 2D
+    // Actualizar textos
     mensajeSticky.innerText = textoGuardado;
     document.querySelector('#texto-3d-ar').setAttribute('value', textoGuardado);
 
     // Selección del usuario en el Modal
     function responderSticky(activado) {
       stickyModoActivado = activado;
-      modal.style.display = 'none'; // Ocultar el Pop-Up
+      modal.style.display = 'none';
     }
 
-    // Evento A: Se detecta la foto de Pikachu
+    // Evento A: Se detecta la foto objetivo
     targetObjetivo.addEventListener("targetFound", () => {
       guiaEncuadre.classList.add("oculto");
       
-      // Si el usuario eligió Sticky AR, el banner 2D aparece en pantalla
       if (stickyModoActivado) {
         mensajeSticky.style.display = "block";
       }
@@ -188,14 +193,11 @@ HTML
 
     // Evento B: Se pierde la foto al mover la cámara
     targetObjetivo.addEventListener("targetLost", () => {
-      // Vuelve a mostrar la guía de encuadre si el usuario lo desea
       guiaEncuadre.classList.remove("oculto");
 
-      // Si Sticky AR está DESACTIVADO, ocultamos el banner al mover la cámara
       if (!stickyModoActivado) {
         mensajeSticky.style.display = "none";
       }
-      // Si Sticky AR está ACTIVADO, mensajeSticky.style.display se queda en "block" y NO se borra
     });
   </script>
 </body>
