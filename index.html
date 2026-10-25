@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -119,9 +118,9 @@ HTML
     </div>
   </div>
 
-  <!-- Capa con Silueta -->
+  <!-- Capa con Silueta apuntando directamente a 2.png -->
   <div id="guia-encuadre">
-    <img id="imagen-silueta-png" src="./silueta.png" alt="Silueta de alineación">
+    <img id="imagen-silueta-png" src="./2.png" alt="Silueta de alineación">
     <div id="texto-instruccion">Alinea la cámara con el objetivo</div>
   </div>
 
@@ -161,14 +160,14 @@ HTML
 
     let stickyModoActivado = false;
 
-    // Lógica inteligente de silueta: usa la subida por Admin si existe, o el archivo local 'silueta.png' por defecto
+    // Lee la silueta de admin.html si existe localmente; si no, carga 2.png desde GitHub
     const siluetaGuardada = localStorage.getItem('silueta_custom_png');
     const textoGuardado = localStorage.getItem('texto_mensaje_custom') || "¡Atrópalos a todos!";
 
     if (siluetaGuardada && siluetaGuardada.trim() !== "") {
       imgSilueta.src = siluetaGuardada;
     } else {
-      imgSilueta.src = "./silueta.png"; // Archivo por defecto en GitHub
+      imgSilueta.src = "./2.png";
     }
 
     mensajeSticky.innerText = textoGuardado;
