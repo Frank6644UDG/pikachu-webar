@@ -3,99 +3,132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Administración WebAR</title>
+  <title>Creador WebAR - Panel de Administración</title>
+
   <style>
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-    .card { background: #fff; padding: 30px; border-radius: 16px; max-width: 480px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-    h2 { margin-top: 0; color: #111; }
-    .form-group { margin-bottom: 18px; }
-    label { font-weight: bold; display: block; margin-bottom: 6px; font-size: 14px; }
-    input[type="file"], input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-    .btn-compiler { display: block; background: #007bff; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-bottom: 20px; }
-    .btn-submit { width: 100%; background: #28a745; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
-    .btn-submit:hover { background: #218838; }
-  </style>
-</head>
-<body>
-
-  <div class="card">
-    <h2>Configurador WebAR</h2>
-    <p style="color:#666; font-size:13px;">Sigue los 2 pasos para publicar tu experiencia:</p>
-
-    <!-- Enlace al Compilador Oficial sin Errores -->
-    <div class="form-group">
-      <label>Paso 1: Generar archivo targets.mind</label>
-      <a href="https://hiukim.github.io/mind-ar-js-doc/tools/compile" target="_blank" class="btn-compiler">
-        🚀 Abrir Compilador Oficial de MindAR
-      </a>
-      <small style="color: #666;">Genera y descarga tu archivo <code>targets.mind</code> en esa página.</small>
-    </div>
-
-    <hr style="border:0; border-top:1px solid #eee; margin: 20px 0;">
-
-    <!-- Subida de Archivos a Render -->
-    <form id="form-config" onsubmit="guardarConfiguracion(event)">
-      <div class="form-group">
-        <label for="input-mind">Paso 2: Cargar archivo targets.mind compilado:</label>
-        <input type="file" id="input-mind" accept=".mind" required>
-      </div>
-
-      <div class="form-group">
-        <label for="input-silueta">Silueta Guía de Encuadre (PNG Transparente):</label>
-        <input type="file" id="input-silueta" accept="image/png">
-      </div>
-
-      <div class="form-group">
-        <label for="input-texto">Texto del Banner Flotante:</label>
-        <input type="text" id="input-texto" value="¡Atrapalos a todos!">
-      </div>
-
-      <button type="submit" class="btn-submit" id="btn-save">Publicar Experiencia AR ✔</button>
-    </form>
-  </div>
-
-  <script>
-    async function guardarConfiguracion(e) {
-      e.preventDefault();
-      const mindFile = document.getElementById('input-mind').files[0];
-      const siluetaFile = document.getElementById('input-silueta').files[0];
-      const texto = document.getElementById('input-texto').value;
-      const btn = document.getElementById('btn-save');
-
-      if (!mindFile) {
-        alert("Por favor sube el archivo targets.mind generado.");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = "Subiendo a Render...";
-
-      const formData = new FormData();
-      formData.append('mindFile', mindFile);
-      if (siluetaFile) {
-        formData.append('fotoSilueta', siluetaFile);
-      }
-
-      localStorage.setItem('texto_mensaje_custom', texto);
-
-      try {
-        const res = await fetch('/api/compile', { method: 'POST', body: formData });
-        const data = await res.json();
-
-        if (data.success) {
-          alert("¡Experiencia publicada exitosamente! Redirigiendo...");
-          window.location.href = 'index.html';
-        } else {
-          alert("Error en el servidor: " + data.error);
-          btn.disabled = false;
-          btn.innerText = "Publicar Experiencia AR ✔";
-        }
-      } catch (err) {
-        alert("Error de conexión con el servidor.");
-        btn.disabled = false;
-        btn.innerText = "Publicar Experiencia AR ✔";
-      }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 90vh;
     }
-  </script>
-</body>
-</html>
+    .card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-width: 520px;
+      width: 100%;
+    }
+    
+    h2 { color: #1a1a1a; margin-top: 0; font-size: 22px; }
+    .subtitulo { color: #666; font-size: 14px; margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 15px; }
+    label { font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 13px; }
+    input[type="file"], input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    .row-controles {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .col-control {
+      flex: 1;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .btn-compiler {
+      display: block;
+      background-color: #007bff;
+      color: white;
+      text-align: center;
+      padding: 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+      margin-top: 6px;
+      transition: background 0.2s;
+    }
+    .btn-compiler:hover { background-color: #0056b3; }
+
+    /* Simulador de Teléfono Smartphone */
+    .simulador-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+
+    .marco-telefono {
+      position: relative;
+      width: 220px;
+      height: 420px;
+      background-color: #111;
+      border-radius: 36px;
+      border: 10px solid #2d2d2d;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 2px #444;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notch-telefono {
+      position: absolute;
+      top: 10px;
+      width: 70px;
+      height: 16px;
+      background-color: #2d2d2d;
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      z-index: 10;
+    }
+
+    .preview-silueta-bg {
+      max-height: 60%;
+      max-width: 80%;
+      opacity: 0.65;
+      object-fit: contain;
+    }
+
+    /* Banner Flotante Personalizable en el Simulador */
+    .preview-texto-overlay {
+      position: absolute;
+      bottom: 40px;
+      background: rgba(255, 204, 0, 0.95);
+      color: #000;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      text-align: center;
+      width: 80%;
+      word-break: break-word;
+      transition: all 0.1s ease;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding:
