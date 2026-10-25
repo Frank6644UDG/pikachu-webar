@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Creador WebAR - Panel de Administración</title>
 
-  <!-- Carga del bundle de MindAR compatible con navegador -->
+  <!-- Librerías requeridas para MindAR -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
@@ -24,7 +25,7 @@
       padding: 30px;
       border-radius: 16px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      max-width: 480px;
+      max-width: 520px;
       width: 100%;
     }
     .paso { display: none; }
@@ -33,15 +34,29 @@
     h2 { color: #1a1a1a; margin-top: 0; font-size: 22px; }
     .subtitulo { color: #666; font-size: 14px; margin-bottom: 20px; }
     
-    .form-group { margin-bottom: 20px; }
-    label { font-weight: bold; display: block; margin-bottom: 8px; color: #333; }
-    input[type="file"], input[type="text"] {
+    .form-group { margin-bottom: 15px; }
+    label { font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 13px; }
+    input[type="file"], input[type="text"], select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
       box-sizing: border-box;
       font-size: 14px;
+    }
+
+    .row-controles {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .col-control {
+      flex: 1;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin-top: 4px;
     }
 
     .leyenda-advertencia {
@@ -55,6 +70,7 @@
       line-height: 1.4;
     }
 
+    /* Simulador de Teléfono */
     .simulador-wrapper {
       display: flex;
       justify-content: center;
@@ -95,19 +111,21 @@
       object-fit: contain;
     }
 
+    /* Elemento de Texto Ajustable */
     .preview-texto-overlay {
       position: absolute;
-      bottom: 40px;
+      bottom: 40px; /* Dinámico por JS */
       background: rgba(255, 204, 0, 0.95);
       color: #000;
-      padding: 10px 18px;
+      padding: 8px 14px;
       border-radius: 20px;
       font-weight: bold;
-      font-size: 14px;
+      font-size: 14px; /* Dinámico por JS */
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       text-align: center;
-      max-width: 80%;
+      width: 80%; /* Dinámico por JS */
       word-break: break-word;
+      transition: all 0.1s ease;
     }
 
     .btn-container {
@@ -178,14 +196,44 @@
       </div>
     </div>
 
-    <!-- PASO 2 -->
+    <!-- PASO 2: Con Controles de Posición, Tamaño y Tipografía -->
     <div class="paso" id="paso-2">
-      <h2>Paso 2: Mensaje e Interfaz</h2>
-      <p class="subtitulo">Personaliza el mensaje flotante y revisa la vista previa en el smartphone.</p>
+      <h2>Paso 2: Personalizar Banner e Interfaz</h2>
+      <p class="subtitulo">Ajusta el texto, posición, tamaño y fuente en tiempo real.</p>
 
       <div class="form-group">
         <label for="input-texto-mensaje">Texto del Banner Flotante:</label>
-        <input type="text" id="input-texto-mensaje" value="Control" oninput="actualizarTextoPreview(this.value)">
+        <input type="text" id="input-texto-mensaje" value="Control" oninput="actualizarEstilosPreview()">
+      </div>
+
+      <!-- Fila 1: Posición y Tamaño de Letra -->
+      <div class="row-controles">
+        <div class="col-control">
+          <label for="input-pos-y">Posición Vertical (Y):</label>
+          <input type="range" id="input-pos-y" min="20" max="320" value="40" oninput="actualizarEstilosPreview()">
+        </div>
+        <div class="col-control">
+          <label for="input-font-size">Tamaño de Letra:</label>
+          <input type="range" id="input-font-size" min="10" max="28" value="14" oninput="actualizarEstilosPreview()">
+        </div>
+      </div>
+
+      <!-- Fila 2: Ancho de Caja y Tipografía -->
+      <div class="row-controles">
+        <div class="col-control">
+          <label for="input-box-width">Ancho de Caja (%):</label>
+          <input type="range" id="input-box-width" min="40" max="90" value="80" oninput="actualizarEstilosPreview()">
+        </div>
+        <div class="col-control">
+          <label for="select-font-family">Tipografía:</label>
+          <select id="select-font-family" onchange="actualizarEstilosPreview()">
+            <option value="Segoe UI, sans-serif">Sans-serif Standard</option>
+            <option value="Georgia, serif">Georgia (Elegante)</option>
+            <option value="'Courier New', monospace">Monospace (Código)</option>
+            <option value="Impact, sans-serif">Impact (Títulos)</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+          </select>
+        </div>
       </div>
 
       <label>Vista Previa sobre Marco de Smartphone Vertical:</label>
@@ -253,8 +301,20 @@
       }
     }
 
-    function actualizarTextoPreview(valor) {
-      document.getElementById('preview-texto-box').innerText = valor || "Tu texto aquí";
+    // Actualización dinámica de estilos en tiempo real
+    function actualizarEstilosPreview() {
+      const texto = document.getElementById('input-texto-mensaje').value;
+      const posY = document.getElementById('input-pos-y').value;
+      const fontSize = document.getElementById('input-font-size').value;
+      const boxWidth = document.getElementById('input-box-width').value;
+      const fontFamily = document.getElementById('select-font-family').value;
+
+      const previewBox = document.getElementById('preview-texto-box');
+      previewBox.innerText = texto || "Tu texto aquí";
+      previewBox.style.bottom = posY + 'px';
+      previewBox.style.fontSize = fontSize + 'px';
+      previewBox.style.width = boxWidth + '%';
+      previewBox.style.fontFamily = fontFamily;
     }
 
     function prepararCanvasImagen(file) {
@@ -281,23 +341,30 @@
     async function finalizarConfiguracion() {
       const inputObjetivo = document.getElementById('foto-objetivo');
       const inputSilueta = document.getElementById('foto-silueta');
-      const textoMensaje = document.getElementById('input-texto-mensaje').value;
       const btn = document.getElementById('btn-finalizar');
 
-      localStorage.setItem('texto_mensaje_custom', textoMensaje);
+      // Guardar todas las propiedades personalizadas localmente
+      const configuracionTexto = {
+        mensaje: document.getElementById('input-texto-mensaje').value,
+        posY: document.getElementById('input-pos-y').value,
+        fontSize: document.getElementById('input-font-size').value,
+        boxWidth: document.getElementById('input-box-width').value,
+        fontFamily: document.getElementById('select-font-family').value
+      };
+
+      localStorage.setItem('config_texto_custom', JSON.stringify(configuracionTexto));
 
       if (inputObjetivo.files[0]) {
         btn.disabled = true;
         btn.innerText = "Compilando en el navegador...";
 
         try {
-          // Detectar dinámicamente el constructor del compilador de MindAR
           const CompilerClass = (window.MINDAR && window.MINDAR.IMAGE && window.MINDAR.IMAGE.Compiler) 
             || (window.MINDAR && window.MINDAR.Compiler) 
             || window.Compiler;
 
           if (!CompilerClass) {
-            throw new Error("El compilador de MindAR no se encuentra disponible. Por favor refresca la página.");
+            throw new Error("El compilador de MindAR no se encuentra listo. Por favor reintenta.");
           }
 
           const canvasElement = await prepararCanvasImagen(inputObjetivo.files[0]);
