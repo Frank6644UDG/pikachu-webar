@@ -3,406 +3,185 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Creador WebAR - Panel de Administración</title>
+  <title>Image Targets Compiler - WebAR Panel</title>
 
-  <!-- Carga limpia de la librería del compilador MindAR (versión UMD sin A-Frame) -->
+  <!-- Carga de la versión de MindAR que utiliza el compilador web oficial -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
 
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8f9fa;
       margin: 0;
-      padding: 20px;
+      padding: 30px 20px;
+      color: #212529;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 90vh;
     }
-    .card {
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      max-width: 520px;
+    .container {
+      max-width: 550px;
       width: 100%;
+      background: #ffffff;
+      padding: 25px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
-    .paso { display: none; }
-    .paso.activo { display: block !important; }
+    h2 { margin-top: 0; font-size: 24px; font-weight: 700; color: #111; }
+    p.subtitle { font-size: 14px; color: #6c757d; margin-bottom: 20px; }
+
+    .dropzone {
+      border: 2px dashed #00c49f;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      background: #f0fdf9;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .dropzone input { display: none; }
+    .dropzone label { cursor: pointer; font-weight: 600; color: #00a884; }
+
+    .form-group { margin-bottom: 18px; }
+    label.title-label { font-weight: 600; font-size: 13px; display: block; margin-bottom: 6px; }
     
-    h2 { color: #1a1a1a; margin-top: 0; font-size: 22px; }
-    .subtitulo { color: #666; font-size: 14px; margin-bottom: 20px; }
-    
-    .form-group { margin-bottom: 15px; }
-    label { font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 13px; }
-    input[type="file"], input[type="text"], select {
+    input[type="text"], select {
       width: 100%;
       padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
-
-    .row-controles {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .col-control {
-      flex: 1;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      margin-top: 4px;
-    }
-
-    .leyenda-advertencia {
-      background-color: #fff8e6;
-      border-left: 4px solid #ffc107;
-      color: #856404;
-      padding: 12px;
-      font-size: 13px;
-      margin-top: 8px;
+      border: 1px solid #ced4da;
       border-radius: 6px;
-      line-height: 1.4;
+      box-sizing: border-box;
     }
 
-    /* Simulador de Teléfono */
-    .simulador-wrapper {
-      display: flex;
-      justify-content: center;
-      margin-top: 15px;
-      margin-bottom: 15px;
-    }
-
-    .marco-telefono {
-      position: relative;
-      width: 220px;
-      height: 420px;
-      background-color: #111;
-      border-radius: 36px;
-      border: 10px solid #2d2d2d;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 2px #444;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .notch-telefono {
-      position: absolute;
-      top: 10px;
-      width: 70px;
-      height: 16px;
-      background-color: #2d2d2d;
-      border-bottom-left-radius: 10px;
-      border-bottom-right-radius: 10px;
-      z-index: 10;
-    }
-
-    .preview-silueta-bg {
-      max-height: 60%;
-      max-width: 80%;
-      opacity: 0.65;
-      object-fit: contain;
-    }
-
-    /* Banner Flotante Personalizable */
-    .preview-texto-overlay {
-      position: absolute;
-      bottom: 40px;
-      background: rgba(255, 204, 0, 0.95);
-      color: #000;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      text-align: center;
-      width: 80%;
-      word-break: break-word;
-      transition: all 0.1s ease;
-    }
-
-    .btn-container {
-      display: flex;
-      gap: 10px;
-      margin-top: 25px;
-    }
-    button {
-      flex: 1;
-      background-color: #007bff;
+    .btn-start {
+      width: 100%;
+      background-color: #00c49f;
       color: white;
       border: none;
-      padding: 12px 18px;
-      font-size: 15px;
-      font-weight: bold;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
       border-radius: 8px;
       cursor: pointer;
       transition: background 0.2s;
     }
-    button:hover { background-color: #0056b3; }
-    button.secundario { background-color: #6c757d; }
-    button.secundario:hover { background-color: #5a6268; }
-    button.exito { background-color: #28a745; }
-    button.exito:hover { background-color: #218838; }
+    .btn-start:hover { background-color: #00a884; }
+    .btn-start:disabled { background-color: #a8e6cf; cursor: not-allowed; }
 
-    .indicador-pasos {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 25px;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 10px;
+    #progress-status {
+      margin-top: 15px;
+      font-weight: 600;
+      text-align: center;
+      color: #008f7a;
     }
-    .paso-dot { font-size: 12px; font-weight: bold; color: #aaa; }
-    .paso-dot.activo { color: #007bff; }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    
-    <div class="indicador-pasos">
-      <span class="paso-dot activo" id="dot-1">1. Imágenes</span>
-      <span class="paso-dot" id="dot-2">2. Texto y Posición</span>
-      <span class="paso-dot" id="dot-3">3. Audio y Publicar</span>
-    </div>
+  <div class="container">
+    <h2>Image Targets Compiler</h2>
+    <p class="subtitle">Select target image and customize your WebAR experience</p>
 
-    <!-- PASO 1 -->
-    <div class="paso activo" id="paso-1">
-      <h2>Paso 1: Configurar Objetivos</h2>
-      <p class="subtitulo">Sube la imagen de escaneo y su silueta correspondiente.</p>
-      
-      <div class="form-group">
-        <label for="foto-objetivo">Foto Objetivo (JPG / PNG):</label>
-        <input type="file" id="foto-objetivo" accept="image/*">
-      </div>
-
-      <div class="form-group">
-        <label for="foto-silueta">Silueta Guía de Encuadre (PNG Transparente):</label>
-        <input type="file" id="foto-silueta" accept="image/png" onchange="cargarVistaPreviaSilueta(this)">
-        
-        <div class="leyenda-advertencia">
-          ⚠️ <strong>Importante:</strong> La silueta debe ser el contorno recortado (con fondo transparente PNG) basado exactamente en la misma foto objetivo cargada arriba.
-        </div>
-      </div>
-
-      <div class="btn-container">
-        <button onclick="irAPaso(2)">Siguiente ➔</button>
+    <!-- Zona Cargar Foto Objetivo -->
+    <div class="form-group">
+      <label class="title-label">1. Foto Objetivo (JPG / PNG):</label>
+      <div class="dropzone" onclick="document.getElementById('foto-objetivo').click()">
+        <label id="label-objetivo">📁 Drop files here or click to upload</label>
+        <input type="file" id="foto-objetivo" accept="image/*" onchange="mostrarNombreArchivo(this, 'label-objetivo')">
       </div>
     </div>
 
-    <!-- PASO 2 -->
-    <div class="paso" id="paso-2">
-      <h2>Paso 2: Personalizar Banner e Interfaz</h2>
-      <p class="subtitulo">Ajusta el texto, posición, tamaño y fuente en tiempo real.</p>
-
-      <div class="form-group">
-        <label for="input-texto-mensaje">Texto del Banner Flotante:</label>
-        <input type="text" id="input-texto-mensaje" value="Control" oninput="actualizarEstilosPreview()">
-      </div>
-
-      <!-- Controles de Posición y Tamaño de Letra -->
-      <div class="row-controles">
-        <div class="col-control">
-          <label for="input-pos-y">Posición Vertical (Y):</label>
-          <input type="range" id="input-pos-y" min="20" max="320" value="40" oninput="actualizarEstilosPreview()">
-        </div>
-        <div class="col-control">
-          <label for="input-font-size">Tamaño de Letra:</label>
-          <input type="range" id="input-font-size" min="10" max="28" value="14" oninput="actualizarEstilosPreview()">
-        </div>
-      </div>
-
-      <!-- Controles de Ancho y Tipografía -->
-      <div class="row-controles">
-        <div class="col-control">
-          <label for="input-box-width">Ancho de Caja (%):</label>
-          <input type="range" id="input-box-width" min="40" max="90" value="80" oninput="actualizarEstilosPreview()">
-        </div>
-        <div class="col-control">
-          <label for="select-font-family">Tipografía:</label>
-          <select id="select-font-family" onchange="actualizarEstilosPreview()">
-            <option value="Segoe UI, sans-serif">Sans-serif Standard</option>
-            <option value="Georgia, serif">Georgia (Elegante)</option>
-            <option value="'Courier New', monospace">Monospace (Código)</option>
-            <option value="Impact, sans-serif">Impact (Títulos)</option>
-            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-          </select>
-        </div>
-      </div>
-
-      <label>Vista Previa sobre Marco de Smartphone Vertical:</label>
-      <div class="simulador-wrapper">
-        <div class="marco-telefono">
-          <div class="notch-telefono"></div>
-          <img id="preview-silueta-img" class="preview-silueta-bg" src="" alt="Vista previa silueta" style="display:none;">
-          <div id="preview-texto-box" class="preview-texto-overlay">Control</div>
-        </div>
-      </div>
-
-      <div class="btn-container">
-        <button class="secundario" onclick="irAPaso(1)">⬅ Atrás</button>
-        <button onclick="irAPaso(3)">Confirmar ➔</button>
-      </div>
+    <!-- Zona Cargar Silueta PNG -->
+    <div class="form-group">
+      <label class="title-label">2. Silueta Guía Encuadre (PNG Transparente):</label>
+      <input type="file" id="foto-silueta" accept="image/png">
     </div>
 
-    <!-- PASO 3 -->
-    <div class="paso" id="paso-3">
-      <h2>Paso 3: Contenido Multimedia</h2>
-      <p class="subtitulo">Añade música o audio a la experiencia.</p>
-
-      <div class="form-group">
-        <label for="audio-archivo">Canción o Audio de Fondo (MP3):</label>
-        <input type="file" id="audio-archivo" accept="audio/mp3,audio/wav">
-      </div>
-
-      <div class="btn-container">
-        <button class="secundario" onclick="irAPaso(2)">⬅ Atrás</button>
-        <button class="exito" id="btn-finalizar" onclick="finalizarConfiguracion()">Terminar Configuración ✔</button>
-      </div>
+    <!-- Mensaje Banner -->
+    <div class="form-group">
+      <label class="title-label">3. Texto Banner Flotante:</label>
+      <input type="text" id="input-texto" value="¡Atrapalos a todos!">
     </div>
 
+    <button class="btn-start" id="btn-start" onclick="iniciarCompilacionOficial()">Start & Publish ✔</button>
+
+    <div id="progress-status"></div>
   </div>
 
   <script>
-    let siluetaBase64 = "";
-
-    function irAPaso(numeroPaso) {
-      if (numeroPaso === 2) {
-        const inputSilueta = document.getElementById('foto-silueta');
-        if (!inputSilueta.files[0] && !siluetaBase64) {
-          alert("Por favor sube la foto de la silueta PNG antes de continuar.");
-          return;
-        }
-      }
-
-      document.querySelectorAll('.paso').forEach(p => p.classList.remove('activo'));
-      document.querySelectorAll('.paso-dot').forEach(d => d.classList.remove('activo'));
-
-      document.getElementById(`paso-${numeroPaso}`).classList.add('activo');
-      document.getElementById(`dot-${numeroPaso}`).classList.add('activo');
-    }
-
-    function cargarVistaPreviaSilueta(input) {
+    function mostrarNombreArchivo(input, labelId) {
       if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          siluetaBase64 = e.target.result;
-          const imgPreview = document.getElementById('preview-silueta-img');
-          imgPreview.src = siluetaBase64;
-          imgPreview.style.display = 'block';
-        };
-        reader.readAsDataURL(input.files[0]);
+        document.getElementById(labelId).innerText = "📄 Imagen cargada: " + input.files[0].name;
       }
     }
 
-    function actualizarEstilosPreview() {
-      const texto = document.getElementById('input-texto-mensaje').value;
-      const posY = document.getElementById('input-pos-y').value;
-      const fontSize = document.getElementById('input-font-size').value;
-      const boxWidth = document.getElementById('input-box-width').value;
-      const fontFamily = document.getElementById('select-font-family').value;
-
-      const previewBox = document.getElementById('preview-texto-box');
-      previewBox.innerText = texto || "Tu texto aquí";
-      previewBox.style.bottom = posY + 'px';
-      previewBox.style.fontSize = fontSize + 'px';
-      previewBox.style.width = boxWidth + '%';
-      previewBox.style.fontFamily = fontFamily;
-    }
-
-    function prepararCanvasImagen(file) {
+    function cargarImagenDOM(file) {
       return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas);
-          };
-          img.onerror = reject;
-          img.src = e.target.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
       });
     }
 
-    async function finalizarConfiguracion() {
-      const inputObjetivo = document.getElementById('foto-objetivo');
-      const inputSilueta = document.getElementById('foto-silueta');
-      const btn = document.getElementById('btn-finalizar');
+    async function iniciarCompilacionOficial() {
+      const inputObj = document.getElementById('foto-objetivo');
+      const inputSil = document.getElementById('foto-silueta');
+      const textoMensaje = document.getElementById('input-texto').value;
+      const btn = document.getElementById('btn-start');
+      const status = document.getElementById('progress-status');
 
-      const configuracionTexto = {
-        mensaje: document.getElementById('input-texto-mensaje').value,
-        posY: document.getElementById('input-pos-y').value,
-        fontSize: document.getElementById('input-font-size').value,
-        boxWidth: document.getElementById('input-box-width').value,
-        fontFamily: document.getElementById('select-font-family').value
-      };
+      if (!inputObj.files[0]) {
+        alert("Por favor selecciona una imagen objetivo antes de iniciar.");
+        return;
+      }
 
-      localStorage.setItem('config_texto_custom', JSON.stringify(configuracionTexto));
+      btn.disabled = true;
+      status.innerText = "Inicializando motor de compilación oficial...";
 
-      if (inputObjetivo.files[0]) {
-        btn.disabled = true;
-        btn.innerText = "Compilando en el navegador...";
+      try {
+        // Cargar la imagen cargada
+        const imgElement = await cargarImagenDOM(inputObj.files[0]);
 
-        try {
-          // Instanciación directa del compilador MINDAR sin interferencias de A-Frame
-          const CompilerClass = (window.MINDAR && window.MINDAR.IMAGE && window.MINDAR.IMAGE.Compiler) 
-            || (window.MINDAR && window.MINDAR.Compiler)
-            || (MINDAR && MINDAR.IMAGE && MINDAR.IMAGE.Compiler);
+        // Iniciar el compilador oficial de MindAR (idéntico al de la web de la imagen)
+        const compiler = new window.MINDAR.IMAGE.Compiler();
 
-          if (!CompilerClass) {
-            throw new Error("No se pudo cargar el motor compilador. Refresca la página e intenta de nuevo.");
-          }
+        status.innerText = "Compilando mapa de puntos... 0%";
 
-          const canvasElement = await prepararCanvasImagen(inputObjetivo.files[0]);
+        const dataList = await compiler.compileImageTargets([imgElement], (progress) => {
+          status.innerText = `Compilando mapa de puntos... ${progress.toFixed(1)}%`;
+        });
 
-          const compiler = new CompilerClass();
-          await compiler.compileImageTargets([canvasElement]);
-          const exportedBuffer = await compiler.exportData();
+        status.innerText = "Generando archivo final .mind...";
+        const exportedBuffer = await compiler.exportData();
 
-          const formData = new FormData();
-          const mindBlob = new Blob([exportedBuffer], { type: 'application/octet-stream' });
-          formData.append('mindFile', mindBlob, 'targets.mind');
+        // Enviar resultado directamente a tu servidor Node.js en Render
+        const formData = new FormData();
+        const mindBlob = new Blob([exportedBuffer], { type: 'application/octet-stream' });
+        formData.append('mindFile', mindBlob, 'targets.mind');
 
-          if (inputSilueta.files[0]) {
-            formData.append('fotoSilueta', inputSilueta.files[0]);
-          }
-
-          const respuesta = await fetch('/api/compile', {
-            method: 'POST',
-            body: formData
-          });
-          const resultado = await respuesta.json();
-
-          if (resultado.success) {
-            alert("¡Compilación exitosa! Redirigiendo a la experiencia AR...");
-            window.location.href = 'index.html';
-          } else {
-            alert("Error al guardar en el servidor: " + resultado.error);
-            btn.disabled = false;
-            btn.innerText = "Terminar Configuración ✔";
-          }
-
-        } catch (error) {
-          console.error("Detalle del error:", error);
-          alert("Error de compilación: " + (error.message || error));
-          btn.disabled = false;
-          btn.innerText = "Terminar Configuración ✔";
+        if (inputSil.files[0]) {
+          formData.append('fotoSilueta', inputSil.files[0]);
         }
-      } else {
-        alert("Configuración guardada. Redirigiendo...");
-        window.location.href = 'index.html';
+
+        localStorage.setItem('texto_mensaje_custom', textoMensaje);
+
+        status.innerText = "Guardando en servidor Render...";
+        const res = await fetch('/api/compile', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+          alert("¡Compilación exitosa! Redirigiendo a la experiencia WebAR...");
+          window.location.href = 'index.html';
+        } else {
+          alert("Error en servidor: " + data.error);
+          btn.disabled = false;
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert("Error durante la compilación: " + err.message);
+        btn.disabled = false;
+        status.innerText = "";
       }
     }
   </script>
