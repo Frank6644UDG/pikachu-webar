@@ -6,36 +6,33 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Servir archivos estáticos desde la carpeta public
+// Servir los archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(fileUpload());
 app.use(express.json());
 
-// Endpoint API para recibir y guardar archivos
-app.post('/api/compile', async (req, res) => {
+// Endpoint para recibir y guardar los archivos compilados
+app.post('/api/compile', (req, res) => {
   try {
+    // Guardar silueta 2.png
     if (req.files && req.files.fotoSilueta) {
       const siluetaPath = path.join(__dirname, 'public', '2.png');
       fs.writeFileSync(siluetaPath, req.files.fotoSilueta.data);
     }
 
-    if (req.files && req.files.fotoObjetivo) {
-      const { Compiler } = require('mind-ar/dist/mindar-image.prod.js');
-      const compiler = new Compiler();
-      await compiler.compileImageTargets([req.files.fotoObjetivo.data]);
-      const exportedBuffer = await compiler.exportData();
-
+    // Guardar archivo targets.mind compilado
+    if (req.files && req.files.mindFile) {
       const targetPath = path.join(__dirname, 'public', 'targets.mind');
-      fs.writeFileSync(targetPath, exportedBuffer);
+      fs.writeFileSync(targetPath, req.files.mindFile.data);
     }
 
-    res.json({ success: true, message: 'Archivos procesados correctamente.' });
+    res.json({ success: true, message: 'Archivos actualizados correctamente en el servidor.' });
   } catch (error) {
-    console.error('Error al procesar en servidor:', error);
+    console.error('Error en el servidor:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor WebAR escuchando en el puerto ${PORT}`);
+  console.log(`Servidor WebAR corriendo exitosamente en el puerto ${PORT}`);
 });
