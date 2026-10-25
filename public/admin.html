@@ -1,78 +1,155 @@
-<script>
-  let siluetaBase64 = "";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creador WebAR - Panel de Administración</title>
+  
+  <!-- Motor Compilador de MindAR -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
 
-  function irAPaso(numeroPaso) {
-    if (numeroPaso === 2) {
-      const inputSilueta = document.getElementById('foto-silueta');
-      if (!inputSilueta.files[0] && !siluetaBase64) {
-        alert("Por favor sube la foto de la silueta PNG antes de continuar.");
-        return;
-      }
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 90vh;
+    }
+    .card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      max-width: 480px;
+      width: 100%;
+    }
+    .paso { display: none; }
+    .paso.activo { display: block; }
+    
+    h2 { color: #1a1a1a; margin-top: 0; font-size: 22px; }
+    .subtitulo { color: #666; font-size: 14px; margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 20px; }
+    label { font-weight: bold; display: block; margin-bottom: 8px; color: #333; }
+    input[type="file"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
     }
 
-    document.querySelectorAll('.paso').forEach(p => p.classList.remove('activo'));
-    document.querySelectorAll('.paso-dot').forEach(d => d.classList.remove('activo'));
-
-    document.getElementById(`paso-${numeroPaso}`).classList.add('activo');
-    document.getElementById(`dot-${numeroPaso}`).classList.add('activo');
-  }
-
-  function cargarVistaPreviaSilueta(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        siluetaBase64 = e.target.result;
-        const imgPreview = document.getElementById('preview-silueta-img');
-        imgPreview.src = siluetaBase64;
-        imgPreview.style.display = 'block';
-      };
-      reader.readAsDataURL(input.files[0]);
+    .leyenda-advertencia {
+      background-color: #fff8e6;
+      border-left: 4px solid #ffc107;
+      color: #856404;
+      padding: 12px;
+      font-size: 13px;
+      margin-top: 8px;
+      border-radius: 6px;
+      line-height: 1.4;
     }
-  }
 
-  function actualizarTextoPreview(valor) {
-    document.getElementById('preview-texto-box').innerText = valor || "Tu texto aquí";
-  }
-
-  async function finalizarConfiguracion() {
-    const inputObjetivo = document.getElementById('foto-objetivo');
-    const inputSilueta = document.getElementById('foto-silueta');
-    const textoMensaje = document.getElementById('input-texto-mensaje').value;
-
-    // Guardar preferencia de texto localmente
-    localStorage.setItem('texto_mensaje_custom', textoMensaje);
-
-    // Si el usuario seleccionó archivos para compilar en el servidor Node.js:
-    if (inputObjetivo.files[0]) {
-      const formData = new FormData();
-      formData.append('fotoObjetivo', inputObjetivo.files[0]);
-      if (inputSilueta.files[0]) {
-        formData.append('fotoSilueta', inputSilueta.files[0]);
-      }
-
-      alert("Procesando objetivo en el servidor Node.js... Por favor espera unos segundos.");
-
-      try {
-        const respuesta = await fetch('/api/compile', {
-          method: 'POST',
-          body: formData
-        });
-        const resultado = await respuesta.json();
-
-        if (resultado.success) {
-          alert("¡Objetivo compilado con éxito en Render! Redirigiendo a la experiencia...");
-          window.location.href = 'index.html';
-        } else {
-          alert("Error al compilar en el servidor: " + resultado.error);
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Ocurrió un error al conectar con el servidor backend.");
-      }
-    } else {
-      // Si no subió foto nueva, redirige directamente utilizando el archivo targets.mind por defecto
-      alert("Configuración guardada. Redirigiendo...");
-      window.location.href = 'index.html';
+    /* Contenedor Exterior para Centrar el Teléfono */
+    .simulador-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+      margin-bottom: 15px;
     }
-  }
-</script>
+
+    /* Marco Realista de Teléfono Smartphone Vertical */
+    .marco-telefono {
+      position: relative;
+      width: 220px;
+      height: 420px;
+      background-color: #111;
+      border-radius: 36px;
+      border: 10px solid #2d2d2d;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 2px #444;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Muesca / Notch de la cámara del smartphone */
+    .notch-telefono {
+      position: absolute;
+      top: 10px;
+      width: 70px;
+      height: 16px;
+      background-color: #2d2d2d;
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      z-index: 10;
+    }
+
+    .preview-silueta-bg {
+      max-height: 60%;
+      max-width: 80%;
+      opacity: 0.65;
+      object-fit: contain;
+    }
+
+    .preview-texto-overlay {
+      position: absolute;
+      bottom: 40px;
+      background: rgba(255, 204, 0, 0.95);
+      color: #000;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      text-align: center;
+      max-width: 80%;
+      word-break: break-word;
+    }
+
+    .btn-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+    button {
+      flex: 1;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #0056b3; }
+    button.secundario { background-color: #6c757d; }
+    button.secundario:hover { background-color: #5a6268; }
+    button.exito { background-color: #28a745; }
+    button.exito:hover { background-color: #218838; }
+
+    .indicador-pasos {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .paso-dot { font-size: 12px; font-weight: bold; color: #aaa; }
+    .paso-dot.activo { color: #007bff; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    
+    <!-- Indicador de Progreso -->
+    <div class="indicador-
