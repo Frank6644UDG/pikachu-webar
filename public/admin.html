@@ -25,14 +25,16 @@
     
     .form-group { margin-bottom: 18px; }
     label { font-weight: bold; display: block; margin-bottom: 6px; font-size: 13px; color: #333; }
-    input[type="file"], input[type="text"] {
+    input[type="file"], input[type="text"], textarea {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
       box-sizing: border-box;
       font-size: 14px;
+      font-family: inherit;
     }
+    textarea { resize: vertical; min-height: 60px; }
 
     .btn-compiler {
       display: block;
@@ -70,7 +72,7 @@
 
   <div class="card">
     <h2>Panel de Configuración WebAR</h2>
-    <p class="subtitulo">Carga los recursos multimedia para tu experiencia AR.</p>
+    <p class="subtitulo">Carga los recursos multimedia y personaliza los textos del paginador.</p>
 
     <!-- Paso 1: Generar targets.mind -->
     <div class="form-group">
@@ -109,6 +111,20 @@
         <input type="file" id="input-audio" accept="audio/mp3,audio/wav">
       </div>
 
+      <hr style="border:0; border-top:1px solid #eee; margin: 20px 0;">
+
+      <!-- TEXTO DE LA PÁGINA 1 -->
+      <div class="form-group">
+        <label for="input-texto-pag1">5. Texto Informativo - Página 1/2:</label>
+        <textarea id="input-texto-pag1">Hachiko fue un perro japonés recordado por su asombrosa lealtad a su dueño, el profesor Hidesaburo Ueno, a quien esperó diariamente durante años.</textarea>
+      </div>
+
+      <!-- TEXTO DE LA PÁGINA 2 -->
+      <div class="form-group">
+        <label for="input-texto-pag2">6. Texto Informativo - Página 2/2:</label>
+        <textarea id="input-texto-pag2">Esta estatua rinde homenaje a su conmovedor reencuentro en el campus de la Universidad de Tokio, celebrando la fidelidad eterna.</textarea>
+      </div>
+
       <button type="submit" class="btn-submit" id="btn-save">Publicar Experiencia AR ✔</button>
     </form>
   </div>
@@ -121,12 +137,20 @@
       const siluetaFile = document.getElementById('input-silueta').files[0];
       const videoFile = document.getElementById('input-video').files[0];
       const audioFile = document.getElementById('input-audio').files[0];
+      
+      const textoPag1 = document.getElementById('input-texto-pag1').value;
+      const textoPag2 = document.getElementById('input-texto-pag2').value;
+      
       const btn = document.getElementById('btn-save');
 
       if (!mindFile) {
         alert("Por favor sube el archivo targets.mind generado.");
         return;
       }
+
+      // Guardar ambas páginas de texto en localStorage
+      localStorage.setItem('texto_custom_pag1', textoPag1);
+      localStorage.setItem('texto_custom_pag2', textoPag2);
 
       btn.disabled = true;
       btn.innerText = "Subiendo recursos a Render...";
@@ -142,7 +166,7 @@
         const data = await res.json();
 
         if (data.success) {
-          alert("¡Todos los recursos se publicaron exitosamente! Redirigiendo...");
+          alert("¡Todos los recursos y textos se publicaron exitosamente! Redirigiendo...");
           window.location.href = 'index.html';
         } else {
           alert("Error en el servidor: " + data.error);
