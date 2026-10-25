@@ -131,4 +131,183 @@
       background-color: #28a745;
       color: white;
       border: none;
-      padding:
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background-color: #218838; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    
+    <h2>Panel de Configuración WebAR</h2>
+    <p class="subtitulo">Genera tu mapa de puntos y personaliza el banner sobre la silueta.</p>
+
+    <!-- PASO 1: Compilar Imagen -->
+    <div class="form-group">
+      <label>Paso 1: Compilar Imagen Objetivo (Motor Oficial)</label>
+      <a href="https://hiukim.github.io/mind-ar-js-doc/tools/compile" target="_blank" class="btn-compiler">
+        🚀 Abrir Compilador Oficial de MindAR
+      </a>
+      <small style="color: #666; display: block; margin-top: 4px;">Sube tu foto ahí y descarga el archivo <code>targets.mind</code>.</small>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+    <form id="form-config" onsubmit="guardarConfiguracion(event)">
+      
+      <!-- Cargar archivo .mind compilado -->
+      <div class="form-group">
+        <label for="input-mind">Paso 2: Cargar el archivo targets.mind generado:</label>
+        <input type="file" id="input-mind" accept=".mind" required>
+      </div>
+
+      <!-- Cargar Silueta PNG -->
+      <div class="form-group">
+        <label for="input-silueta">Silueta Guía de Encuadre (PNG Transparente):</label>
+        <input type="file" id="input-silueta" accept="image/png" onchange="cargarVistaPreviaSilueta(this)">
+      </div>
+
+      <!-- Texto del Banner -->
+      <div class="form-group">
+        <label for="input-texto-mensaje">Texto del Banner Flotante:</label>
+        <input type="text" id="input-texto-mensaje" value="¡Atrópalos a todos!" oninput="actualizarEstilosPreview()">
+      </div>
+
+      <!-- CONTROLES VISUALES INTERACTIVOS -->
+      <!-- Fila 1: Posición Vertical y Tamaño de Letra -->
+      <div class="row-controles">
+        <div class="col-control">
+          <label for="input-pos-y">Posición Vertical (Y):</label>
+          <input type="range" id="input-pos-y" min="20" max="320" value="40" oninput="actualizarEstilosPreview()">
+        </div>
+        <div class="col-control">
+          <label for="input-font-size">Tamaño de Letra:</label>
+          <input type="range" id="input-font-size" min="10" max="28" value="14" oninput="actualizarEstilosPreview()">
+        </div>
+      </div>
+
+      <!-- Fila 2: Ancho de Caja y Tipografía -->
+      <div class="row-controles">
+        <div class="col-control">
+          <label for="input-box-width">Ancho de Caja (%):</label>
+          <input type="range" id="input-box-width" min="40" max="90" value="80" oninput="actualizarEstilosPreview()">
+        </div>
+        <div class="col-control">
+          <label for="select-font-family">Tipografía:</label>
+          <select id="select-font-family" onchange="actualizarEstilosPreview()">
+            <option value="Segoe UI, sans-serif">Sans-serif Standard</option>
+            <option value="Georgia, serif">Georgia (Elegante)</option>
+            <option value="'Courier New', monospace">Monospace (Código)</option>
+            <option value="Impact, sans-serif">Impact (Títulos)</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SIMULADOR DE TELÉFONO CON VISTA PREVIA EN TIEMPO REAL -->
+      <label>Vista Previa sobre Marco de Smartphone Vertical:</label>
+      <div class="simulador-wrapper">
+        <div class="marco-telefono">
+          <div class="notch-telefono"></div>
+          <img id="preview-silueta-img" class="preview-silueta-bg" src="" alt="Vista previa silueta" style="display:none;">
+          <div id="preview-texto-box" class="preview-texto-overlay">¡Atrópalos a todos!</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="btn-save">Publicar Experiencia AR ✔</button>
+    </form>
+
+  </div>
+
+  <script>
+    let siluetaBase64 = "";
+
+    function cargarVistaPreviaSilueta(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          siluetaBase64 = e.target.result;
+          const imgPreview = document.getElementById('preview-silueta-img');
+          imgPreview.src = siluetaBase64;
+          imgPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // Actualización dinámica de estilos en tiempo real sobre el simulador
+    function actualizarEstilosPreview() {
+      const texto = document.getElementById('input-texto-mensaje').value;
+      const posY = document.getElementById('input-pos-y').value;
+      const fontSize = document.getElementById('input-font-size').value;
+      const boxWidth = document.getElementById('input-box-width').value;
+      const fontFamily = document.getElementById('select-font-family').value;
+
+      const previewBox = document.getElementById('preview-texto-box');
+      previewBox.innerText = texto || "Tu texto aquí";
+      previewBox.style.bottom = posY + 'px';
+      previewBox.style.fontSize = fontSize + 'px';
+      previewBox.style.width = boxWidth + '%';
+      previewBox.style.fontFamily = fontFamily;
+    }
+
+    async function guardarConfiguracion(e) {
+      e.preventDefault();
+      
+      const mindFile = document.getElementById('input-mind').files[0];
+      const siluetaFile = document.getElementById('input-silueta').files[0];
+      const btn = document.getElementById('btn-save');
+
+      if (!mindFile) {
+        alert("Por favor carga el archivo targets.mind generado.");
+        return;
+      }
+
+      // Guardar todos los valores de personalización visual en localStorage
+      const configuracionTexto = {
+        mensaje: document.getElementById('input-texto-mensaje').value,
+        posY: document.getElementById('input-pos-y').value,
+        fontSize: document.getElementById('input-font-size').value,
+        boxWidth: document.getElementById('input-box-width').value,
+        fontFamily: document.getElementById('select-font-family').value
+      };
+
+      localStorage.setItem('config_texto_custom', JSON.stringify(configuracionTexto));
+
+      btn.disabled = true;
+      btn.innerText = "Publicando en Render...";
+
+      const formData = new FormData();
+      formData.append('mindFile', mindFile);
+      if (siluetaFile) {
+        formData.append('fotoSilueta', siluetaFile);
+      }
+
+      try {
+        const res = await fetch('/api/compile', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+          alert("¡Experiencia publicada exitosamente! Redirigiendo a la cámara AR...");
+          window.location.href = 'index.html';
+        } else {
+          alert("Error en el servidor: " + data.error);
+          btn.disabled = false;
+          btn.innerText = "Publicar Experiencia AR ✔";
+        }
+      } catch (err) {
+        alert("Error al conectar con el servidor backend en Render.");
+        btn.disabled = false;
+        btn.innerText = "Publicar Experiencia AR ✔";
+      }
+    }
+  </script>
+</body>
+</html>
